@@ -18,6 +18,11 @@ This application is more useful than either of those.
 [See a live version of this application online here.](
 http://nathancarter.github.io/weblurch/app/math-example.html)
 
+This application needs the equation editor plugin, so we must tell the setup
+script to load it, by modifying the following global variable.
+
+    window.pluginsToLoad.push 'equationeditor'
+
 ## Define one group type
 
 For information on what this code does, see the simple example linked to
