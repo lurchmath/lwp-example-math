@@ -6,13 +6,19 @@
 To know what's going on here, you should first have read the documenation
 for [the simple example application](simple-example-solo.litcoffee) and then
 for [the complex example application](complex-example-solo.litcoffee).
-This application is more useful than either of those.
+
+This application, too, is an example application built on the [Lurch Web
+Platform (LWP)](https://github.com/lurchmath/lurch), but it is more
+interesting than the two above, because it shows how to incorporate an
+equation editor and OpenMath semantics into an application (albeit in a
+very simple way).
 
     setAppName 'MathApp'
-    addHelpMenuSourceCodeLink 'app/math-example-solo.litcoffee'
+    addHelpMenuSourceCodeLink \
+        'lwp-example-math/blob/master/lwp-example-math.litcoffee'
     window.helpAboutText =
         '<p>See the fully documented <a target="top"
-        href="https://github.com/nathancarter/weblurch/blob/master/app/math-example-solo.litcoffee"
+        href="https://github.com/lurchmath/lwp-example-math/blob/master/lwp-example-math.litcoffee"
         >source code for this demo app</a>.</p>'
 
 [See a live version of this application online here.](
@@ -25,8 +31,8 @@ script to load it, by modifying the following global variable.
 
 ## Define one group type
 
-For information on what this code does, see the simple example linked to
-above.
+This initialization code is similar to that in the two simpler example
+applications linked to above.  This file assumes you've read those.
 
     window.groupTypes = [
         name : 'me'
@@ -38,24 +44,32 @@ above.
         closeImageHTML : '<font color="#666699"><b>]</b></font>'
 
 The `contentsChanged` function is called on a group whenever that group just
-had its contents changed.  In this case, we simply compute the contents of
-the bubble tag and store them in the group.  The `inspect` function is
-central here, and is defined in [the following
+had its contents changed.  In this case, we analyze the contents of the
+bubble tag and store the results of that analysis in the group.
+
+The `inspect` function is central here, and is defined in [the following
 section](#utility-functions-used-by-the-code-above).  It returns an
 [OpenMath](http://www.openmath.org) data structure (as defined in [the
-OpenMath module](../src/openmath-duo.litcoffee) in this repository) that we
-can inspect to learn about the semantics of the group contents.
+OpenMath JavaScript repository](https://github.com/lurchmath/openmath-js)),
+which we can inspect to learn about the semantics of the group contents.
 
         contentsChanged : ( group, firstTime ) ->
             info = inspect group
             if info instanceof window.OMNode
                 info = switch info.type
+
+Label all basic types with the name of the basic type itself:
+
                     when 'i' then 'integer'
                     when 'f' then 'float'
                     when 'st' then 'string'
                     when 'ba' then 'byte array'
                     when 'sy' then 'symbol'
                     when 'v' then 'variable'
+
+Label a function application with a name determined by the function or
+operator being applied:
+
                     when 'a' then switch info.children[0].simpleEncode()
                         when 'arith1.plus', 'arith1.sum' then 'sum'
                         when 'arith1.minus' then 'difference'
@@ -91,17 +105,20 @@ can inspect to learn about the semantics of the group contents.
                              'interval1.interval_cc' then 'interval'
                         when 'integer1.factorial' then 'factorial'
                         when 'limit1.limit' then 'limit'
+
+Label a binding expression as a lambda closure, since that's the only kind
+supported by this application:
+
                     when 'b' then 'lambda closure'
 
-We then store the results of that computation in an attribute of the group,
-so that it's easy to look up later, when we need to place it in the bubble
-tag.
+We store the results of the inpection in an attribute of the group, so that
+it's easy to look up later, when we need to place it in the bubble tag.
 
             group.set 'tag', info
 
-When the group's tag needs to be computed, we simply lift the data out of
-the result already stored in the group from the above computation, and use
-that to determine the contents of the bubble tag.
+When the application requests that we compute the group's tag, we just lift
+the data out of the result already stored in the group from the above
+computation, and use that as the contents of the bubble tag.
 
         tagContents : ( group ) -> group.get 'tag'
 
@@ -117,13 +134,19 @@ Clicking the tag or the context menu brings up the same menu, defined in
 The `inspect` function tries to interpret the contents of the group as
 containing a single [MathQuill](http://mathquill.com/) instance.  (The LWP
 comes with the built-in ability to insert MathQuill instances into documents
-as WYSIWYG math expression editors.)  It returns one of two things.  If it
-returns an `OMNode` instance, it will be the meaning of the one MathQuill
-instance in the bubble, implying that there is one instance in the bubble
-and a meaning is parseable from it using [the parser defined
-here](../src/mathquill-parser-solo.litcoffee).  If an error arose in
-attempting such a computation, then a string will be returned containing the
-error.
+as WYSIWYG math expression editors.  It resides in the [eqed](eqed/) folder,
+imported from [the LWP
+repository](https://github.com/lurchmath/lurch/tree/master/source/assets/eqed).)
+
+The `inspect` function returns one of two things.
+ * If it returns an `OMNode` instance, it will be the meaning of the one
+   MathQuill instance in the bubble, implying that there is one such
+   instance in the group, and a meaning is parseable from it using [the
+   MathQuill parser defined in the
+   LWP](https://github.com/lurchmath/lurch/blob/master/source/auxiliary/mathquill-parser.litcoffee).
+ * If an error arose in attempting such a computation, then a string will
+   be returned containing the error.
+
 
     inspect = ( group ) ->
         nodes = $ group.contentNodes()
@@ -145,15 +168,13 @@ error.
 
 The following function provides the contents of either the tag menu or the
 context menu for a group; both are the same.  They contain two menu items.
- 1. The first shows the full OpenMath structure of a group's meaning, as
-    XML.  It uses the `toXML` function defined at the end of
-    [the OpenMath module](../src/openmath-duo.litcoffee).
- 1. The second is for evaluating the group's contents, as a mathematical
-    expression.  It uses the `evaluate` function defined at the end of
-    [the OpenMath module](../src/openmath-duo.litcoffee).
-
 
     menu = ( group ) -> [
+
+The first shows the full OpenMath structure of a group's meaning, as XML.
+It uses the `toXML` function defined [near the end of the OpenMath
+module](https://github.com/lurchmath/openmath-js/blob/master/openmath.litcoffee#converting-mathematical-expressions-to-xml).
+
         text : 'See full OpenMath structure'
         onclick : ->
             if ( info = inspect group ) not instanceof OMNode
@@ -163,6 +184,12 @@ context menu for a group; both are the same.  They contain two menu items.
                     alert info.toXML() ? "This demo could not convert some
                         part of that expression to XML."
                 catch e then alert e.message ? e
+
+The second is for evaluating the group's contents, as a mathematical
+expression.  It uses the `evaluate` function defined [at the end of the
+OpenMath
+module](https://github.com/lurchmath/openmath-js/blob/master/openmath.litcoffee#evaluating-mathematical-expressions-numerically).
+
     ,
         text : 'Evaluate this'
         onclick : ->

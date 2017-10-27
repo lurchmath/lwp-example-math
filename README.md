@@ -34,6 +34,8 @@ Seeing OpenMath:
    the mathematics you typed.
  * For those unfamiliar with OpenMath, see its specification document
    [here](http://www.openmath.org/standard/om20-2004-06-30/).
+ * The JavaScript implementation of OpenMath comes from
+   [this repository in the Lurch project](https://github.com/lurchmath/openmath-js).
 
 Evaluating expressions:
 
