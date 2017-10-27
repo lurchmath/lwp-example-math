@@ -1,5 +1,5 @@
 
-# Mathematical Example webLurch Application
+# Mathematical Example Application, Lurch Web Platform
 
 ## Overview
 
@@ -21,8 +21,7 @@ very simple way).
         href="https://github.com/lurchmath/lwp-example-math/blob/master/lwp-example-math.litcoffee"
         >source code for this demo app</a>.</p>'
 
-[See a live version of this application online here.](
-http://nathancarter.github.io/weblurch/app/math-example.html)
+[A live version of this app is online here.](https://lurchmath.github.io/lwp-example-math)
 
 This application needs the equation editor plugin, so we must tell the setup
 script to load it, by modifying the following global variable.
